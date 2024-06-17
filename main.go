@@ -1,8 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+)
+
+const (
+	port = ":4000"
 )
 
 // handler function
@@ -11,7 +17,12 @@ func home(w http.ResponseWriter, r *http.Request) {
 }
 
 func snippetView(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Display a snippet"))
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || id < 1 {
+		http.NotFound(w, r)
+		return
+	}
+	w.Write([]byte(fmt.Sprintf("Display a snippet with id %d", id)))
 }
 
 func snippetCreate(w http.ResponseWriter, r *http.Request) {
@@ -19,13 +30,13 @@ func snippetCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	mux := http.NewServeMux()    //routers are referred to as servemux in Go
-	mux.HandleFunc("/{$}", home) //registers home function as handler for / URL pattern, {$} prevents it from acting as a catchall
-	mux.HandleFunc("/snippet/view", snippetView)
-	mux.HandleFunc("/snippet/create", snippetCreate)
+	mux := http.NewServeMux()                             //routers are referred to as servemux in Go
+	mux.HandleFunc("GET /{$}", home)                      //registers home function as handler for / URL pattern, {$} prevents it from acting as a catchall
+	mux.HandleFunc("GET /snippet/view/{id}", snippetView) //wildcards can be used
+	mux.HandleFunc("GET /snippet/create", snippetCreate)
 
-	log.Print("sartomg server on: 4000")
+	log.Printf("Starting server on %v", port)
 
-	err := http.ListenAndServe(":4000", mux)
+	err := http.ListenAndServe(port, mux)
 	log.Fatal(err)
 }
